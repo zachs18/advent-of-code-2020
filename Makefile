@@ -8,5 +8,5 @@ ${DAYS}:
 .PHONY: all ${DAYS}
 
 day_%: .template
-	cp -nr $< $@
+	[ -e $@ ] || cp -nr $< $@
 	git add $@

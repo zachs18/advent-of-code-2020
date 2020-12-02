@@ -1,5 +1,7 @@
 #include <cstdlib>
 #include <iostream>
+#include <iterator>
+#include <vector>
 
 
 int main(int argc, char **argv) {
