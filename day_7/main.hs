@@ -46,6 +46,20 @@ unique :: Eq a => [a] -> [a]
 unique [] = []
 unique (x:xs) = x : (unique $ filter (/= x) xs)
 
+combineChildren :: [(Bag, Int)] -> [(Bag, Int)]
+combineChildren [] = []
+combineChildren ((b,i):xs) = (b, (foldl (+) i $ map snd $ filter (\(b2,i2) -> b2 == b) xs)) : (combineChildren $ filter (\(b2,i2) -> b2 /= b) xs)
+
+findDirectChildren :: (Bag, Int) -> Rule -> [(Bag, Int)]
+findDirectChildren (bag,count) rule =
+	[(cbag,i*count) | (_,(cbag,i)) <- filter (\(b1,(b2,i)) -> b1 == bag) rule]
+
+findAllChildren :: (Bag, Int) -> Rule -> [(Bag, Int)]
+findAllChildren (bag,count) rule =
+	case directChildren of
+		[] -> []
+		_ -> combineChildren $ (directChildren ++ (foldl (++) [] $ map (\bi -> findAllChildren bi rule) directChildren))
+	where directChildren = findDirectChildren (bag,count) rule
 
 main = do
 	args <- getArgs
@@ -62,4 +76,6 @@ main = do
 --	print $ findAllParents bag rule
 --	putChar '\n'
 	print $ length $ findAllParents bag rule
+--	print $ findAllChildren (bag, 1) rule
+	print $ foldl (+) 0 $ map snd $ findAllChildren (bag, 1) rule
 
