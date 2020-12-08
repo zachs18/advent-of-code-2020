@@ -37,8 +37,6 @@ findAllParents :: Bag -> Rule -> [Bag]
 findAllParents bag rule =
 	case directParents of
 		[] -> []
-		--_ -> directParents ++ map (\b -> foldl (++) [] $ findAllParents b rule) directParents
-		--_ -> directParents ++ map (\b -> findAllParents b rule) directParents
 		_ -> unique $ (directParents ++ (foldl (++) [] $ map (\b -> findAllParents b rule) directParents))
 	where directParents = findDirectParents bag rule
 
@@ -70,12 +68,7 @@ main = do
 	contents <- hGetContents file
 	let rulesStrs = lines contents
 	let rule = combineRules $ map parseRule rulesStrs
---	print rule
 	
---	print $ findDirectParents bag rule
---	print $ findAllParents bag rule
---	putChar '\n'
 	print $ length $ findAllParents bag rule
---	print $ findAllChildren (bag, 1) rule
 	print $ foldl (+) 0 $ map snd $ findAllChildren (bag, 1) rule
 
