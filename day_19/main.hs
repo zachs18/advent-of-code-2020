@@ -2,7 +2,7 @@ import System.Environment
 import System.IO
 import qualified Data.List as List
 import qualified Data.Map as M
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, catMaybes)
 import Text.Read (readMaybe)
 
 data Rule = Terminal String | SubRules [[Int]]
@@ -24,30 +24,24 @@ parseRule s =
         Nothing -> (read left, SubRules (map (map read . words) $ splitBy (=='|') right))
     where [left, right] = splitBy (==':') s
 
-helper :: Rules -> String -> [Int] -> Maybe String
-helper rules input [] = Just input
+helper :: Rules -> String -> [Int] -> [String]
+helper rules input [] = [input]
 helper rules input (rule:rs) =
-    case matchHead rules input rule of
-        Just input' -> helper rules input' rs
-        Nothing -> Nothing
+    concatMap (\input' -> helper rules input' rs) $ matchHead rules input rule
 
-matchHead :: Rules -> String -> Int -> Maybe String
+matchHead :: Rules -> String -> Int -> [String]
 matchHead rules input rule =
     case rules M.! rule of
         Terminal terminal ->
             if List.isPrefixOf terminal input
-                then Just $ snd $ splitAt (length terminal) input
-                else Nothing
+                then [snd $ splitAt (length terminal) input]
+                else []
         SubRules subrules ->
-            case dropWhile (not . isJust) $ map (helper rules input) subrules of
-                (Just input':_) -> Just input'
-                _ -> Nothing
+            concatMap (helper rules input) subrules
 
 matchFull :: Rules -> String -> Int -> Bool
 matchFull rules input rule =
-    case matchHead rules input rule of
-        Just "" -> True
-        _ -> False
+    "" `elem` matchHead rules input rule
 
 main :: IO ()
 main = do
@@ -58,4 +52,9 @@ main = do
     [rulesStrs, input] <- fmap (splitBy (=="")) $ fmap lines $ hGetContents file
 
     let rules = M.fromList $ map parseRule rulesStrs
-    print $ length $ filter id $ map (\s -> matchFull rules s 0) input
+    let (matches, nonMatches) = List.partition (\s -> matchFull rules s 0) input
+    print $ length matches
+    
+    let rules' = M.insert 8 (SubRules [[42],[42,8]]) $ M.insert 11 (SubRules [[42,31],[42,11,31]]) rules
+    let (matches', nonMatches') = List.partition (\s -> matchFull rules' s 0) input
+    print $ length matches'
