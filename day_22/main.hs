@@ -34,6 +34,24 @@ playGame decks =
         Nothing -> playGame $ playRound decks
         Just loser -> decks
 
+playRecursiveRound :: [[Deck]] -> [Deck] -> (Int, [Deck])
+playRecursiveRound seenStates decks =
+    (winnerIndex, beforeRests ++ [winnerRest'] ++ afterRests)
+    where
+        topCards = map head decks
+        rests = map tail decks
+        winningCard = maximum topCards
+        Just winnerIndex = List.elemIndex winningCard topCards
+        (beforeRests, (winnerRest:afterRests)) = splitAt winnerIndex rests
+        winnerRest' = winnerRest ++ [winningCard] ++ filter (/= winningCard) topCards
+
+playRecursiveGame :: [[Deck]] -> [Deck] -> (Int, [Deck])
+playRecursiveGame seenStates decks =
+    if decks `elem` seenStates
+        then (0, decks)
+        else case playRecursiveRound seenStates decks of
+            _ -> undefined
+
 score :: Deck -> Int
 score deck = sum $ zipWith (*) [1..] $ reverse deck
 
